@@ -1,0 +1,33 @@
+name: Generate Yandex size padding
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  pad:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create 240KB padding asset
+        run: |
+          mkdir -p assets
+          python3 - <<'PY'
+          import os
+          path = 'assets/yandex-size-pad.bin'
+          with open(path, 'wb') as f:
+              f.write(os.urandom(240 * 1024))
+          print(path, os.path.getsize(path))
+          PY
+      - name: Commit padding file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/yandex-size-pad.bin
+          git commit -m "Add 240KB Yandex padding asset" || exit 0
+          git push
