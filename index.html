@@ -5,465 +5,526 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#130633" />
-  <meta name="description" content="Гекса Сорт 3D — расслабляющая HTML5 головоломка с сортировкой цветных шестигранных стеков." />
+  <meta name="theme-color" content="#12032f" />
+  <meta name="description" content="Гекса Сорт 3D — красивая HTML5 головоломка с 3D шестигранниками для Яндекс Игр." />
   <title>Гекса Сорт 3D</title>
   <script src="https://yandex.ru/games/sdk/v2"></script>
   <style>
     :root {
-      --bg0: #070015;
-      --bg1: #17033f;
-      --violet: #8b5cff;
-      --violet2: #d3a7ff;
-      --panel: rgba(28, 15, 63, .76);
-      --panel2: rgba(11, 6, 32, .88);
+      --bg-a: #070019;
+      --bg-b: #19044b;
+      --panel: rgba(33, 18, 76, .74);
+      --panel-strong: rgba(18, 8, 48, .88);
+      --stroke: rgba(223, 194, 255, .26);
+      --stroke-strong: rgba(234, 211, 255, .52);
       --text: #fff8ff;
-      --muted: #bdaee8;
-      --gold: #ffd166;
-      --green: #55f079;
-      --pink: #ff4f88;
+      --muted: #c9b9ef;
+      --shadow: rgba(0, 0, 0, .48);
+      --gold: #ffd56b;
       font-family: Inter, ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #080018; color: var(--text); }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #080018; color: var(--text); }
     body {
       display: grid;
       place-items: center;
       background:
-        radial-gradient(circle at 16% 18%, rgba(123, 68, 255, .55), transparent 32%),
-        radial-gradient(circle at 84% 28%, rgba(98, 225, 255, .18), transparent 28%),
-        radial-gradient(circle at 50% 108%, rgba(255, 82, 168, .22), transparent 36%),
-        linear-gradient(145deg, #10032f 0%, #160546 44%, #050014 100%);
+        radial-gradient(circle at 16% 16%, rgba(127, 63, 255, .62), transparent 30%),
+        radial-gradient(circle at 84% 26%, rgba(255, 71, 168, .19), transparent 27%),
+        radial-gradient(circle at 50% 112%, rgba(76, 239, 166, .13), transparent 34%),
+        linear-gradient(148deg, #09001e 0%, #170342 45%, #050012 100%);
     }
 
-    .game {
-      width: min(100vw, 560px);
-      height: min(100vh, 920px);
-      min-height: 640px;
+    button { font: inherit; color: inherit; }
+
+    .app {
+      width: min(100vw, 650px);
+      height: 100dvh;
+      min-height: 610px;
+      padding: max(10px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-rows: auto auto auto 1fr auto auto;
+      gap: 9px;
       position: relative;
       overflow: hidden;
-      padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom));
       isolation: isolate;
     }
 
-    .aurora,
-    .aurora::before,
-    .aurora::after {
+    .app::before,
+    .app::after {
       content: "";
       position: absolute;
-      inset: auto;
       border-radius: 999px;
-      filter: blur(28px);
-      opacity: .75;
+      filter: blur(34px);
       pointer-events: none;
       z-index: -1;
     }
-    .aurora { width: 260px; height: 260px; left: -90px; top: 80px; background: rgba(118, 55, 255, .7); }
-    .aurora::before { width: 260px; height: 210px; right: -470px; top: 190px; background: rgba(255, 70, 158, .28); }
-    .aurora::after { width: 360px; height: 210px; left: 190px; bottom: -520px; background: rgba(93, 244, 154, .22); }
+    .app::before { width: 320px; height: 320px; left: -130px; top: 92px; background: rgba(112, 57, 255, .66); }
+    .app::after { width: 280px; height: 260px; right: -120px; bottom: 44px; background: rgba(255, 82, 174, .22); }
 
-    .topbar {
+    .glass {
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(70, 41, 141, .68), rgba(19, 8, 55, .78));
+      box-shadow:
+        0 18px 48px rgba(0,0,0,.30),
+        inset 0 1px 0 rgba(255,255,255,.17),
+        inset 0 -16px 30px rgba(0,0,0,.18);
+      backdrop-filter: blur(12px);
+    }
+
+    .hud {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
-      margin-bottom: 10px;
     }
-    .hud-card, .order-card, .tool-card, .tray, .board-shell {
-      border: 1px solid rgba(210, 178, 255, .18);
-      background: linear-gradient(180deg, rgba(60, 34, 122, .72), rgba(17, 8, 48, .82));
-      box-shadow: 0 18px 48px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.13);
-      backdrop-filter: blur(10px);
-    }
-    .hud-card {
-      min-height: 66px;
-      border-radius: 20px;
-      padding: 10px 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 2px;
+
+    .stat {
+      min-height: 56px;
+      border-radius: 19px;
+      padding: 9px 11px;
       position: relative;
       overflow: hidden;
     }
-    .hud-card::after {
+    .stat::after {
       content: "";
       position: absolute;
-      inset: -50% auto auto -30%;
-      width: 100px;
-      height: 160px;
-      transform: rotate(26deg);
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
+      width: 72px;
+      height: 130px;
+      left: -42px;
+      top: -42px;
+      transform: rotate(29deg);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent);
     }
-    .label { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-    .value { font-size: 21px; font-weight: 950; line-height: 1; text-shadow: 0 3px 18px rgba(190, 132, 255, .35); }
-    .value.small { font-size: 18px; color: var(--gold); }
+    .stat b { display: block; font-size: 11px; line-height: 1; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+    .stat span { display: block; margin-top: 5px; font-size: 23px; line-height: 1; font-weight: 1000; letter-spacing: -.04em; text-shadow: 0 4px 18px rgba(193, 139, 255, .34); }
+    .stat .coins { color: var(--gold); }
 
-    .title-row {
+    .hero {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      margin: 4px 2px 10px;
-      gap: 12px;
+      align-items: end;
+      gap: 10px;
+      padding: 1px 2px;
     }
     h1 {
       margin: 0;
-      font-size: clamp(25px, 7vw, 42px);
-      letter-spacing: -0.05em;
-      line-height: .95;
-      text-shadow: 0 4px 0 rgba(40,10,92,.92), 0 0 32px rgba(149, 93, 255, .75);
+      font-size: clamp(30px, 7.2vw, 50px);
+      line-height: .87;
+      letter-spacing: -.075em;
+      font-weight: 1000;
+      text-shadow: 0 4px 0 rgba(45, 15, 112, .95), 0 0 34px rgba(165, 96, 255, .72);
     }
-    .pill {
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.08);
-      color: #fff;
+    .combo {
+      flex: none;
+      margin-bottom: 4px;
+      min-width: 86px;
+      padding: 10px 13px;
       border-radius: 999px;
-      padding: 9px 12px;
-      font-weight: 900;
-      font-size: 12px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
-      white-space: nowrap;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.13);
+      font-size: 13px;
+      font-weight: 1000;
+      text-align: center;
     }
 
-    .order-card {
-      display: grid;
-      grid-template-columns: 58px 1fr;
-      gap: 10px;
-      align-items: center;
-      border-radius: 22px;
+    .mission {
+      min-height: 63px;
+      border-radius: 23px;
       padding: 10px 12px;
-      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 11px;
+      align-items: center;
     }
-    .order-gem {
-      width: 58px;
-      height: 58px;
+    .mission-hex {
+      width: 54px;
+      height: 54px;
       position: relative;
-      filter: drop-shadow(0 12px 18px rgba(0,0,0,.38));
+      filter: drop-shadow(0 13px 18px rgba(0,0,0,.42));
     }
-    .order-gem .hex-face {
-      width: 100%; height: 100%;
-      clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0 50%);
-      background: var(--goalColor, linear-gradient(135deg, #64ff8e, #19b94a));
-      border: 2px solid rgba(255,255,255,.7);
-      box-shadow: inset 0 8px 12px rgba(255,255,255,.38), inset 0 -14px 18px rgba(0,0,0,.24), 0 0 28px rgba(255,255,255,.14);
-    }
-    .order-text strong { display: block; font-size: 17px; line-height: 1; margin-bottom: 6px; }
-    .progress {
-      height: 13px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: rgba(5, 0, 20, .62);
-      border: 1px solid rgba(255,255,255,.1);
-      box-shadow: inset 0 2px 8px rgba(0,0,0,.5);
-    }
-    .progress > i {
-      display: block;
-      width: 0%; height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, #fff, var(--goalSolid, #60f783));
-      box-shadow: 0 0 16px var(--goalSolid, #60f783);
-      transition: width .25s ease;
-    }
-    .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
-
-    .board-shell {
-      height: min(54vh, 490px);
-      min-height: 375px;
-      border-radius: 34px;
-      padding: 14px;
-      position: relative;
-      overflow: hidden;
-      transform: translateZ(0);
-    }
-    .board-shell::before {
+    .mission-hex::before,
+    .mission-hex::after {
       content: "";
       position: absolute;
-      inset: 7px;
+      inset: 0;
+      clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0 50%);
+      background: var(--missionGrad);
+    }
+    .mission-hex::before { transform: translateY(8px); filter: brightness(.58); }
+    .mission-hex::after {
+      border: 2px solid rgba(255,255,255,.62);
+      box-shadow: inset 0 11px 13px rgba(255,255,255,.34), inset 0 -14px 18px rgba(0,0,0,.24), 0 0 24px var(--missionGlow);
+    }
+    .mission-title { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-weight: 1000; font-size: 16px; line-height: 1; margin-bottom: 8px; }
+    .mission-title small { color: var(--muted); font-size: 12px; font-weight: 900; white-space: nowrap; }
+    .bar {
+      height: 14px;
+      padding: 2px;
+      border-radius: 999px;
+      background: rgba(5, 0, 20, .72);
+      box-shadow: inset 0 2px 7px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.08);
+      overflow: hidden;
+    }
+    .bar i { display: block; width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #fff, var(--missionSolid)); box-shadow: 0 0 16px var(--missionSolid); transition: width .24s ease; }
+
+    .board-zone {
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      padding: 2px 0;
+    }
+
+    .board-card {
+      width: min(100%, 520px, calc(100dvh - 392px));
+      min-width: 320px;
+      max-width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 36px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 22%, rgba(155, 121, 255, .32), transparent 36%),
+        radial-gradient(circle at 34% 78%, rgba(47, 214, 255, .10), transparent 28%),
+        linear-gradient(180deg, rgba(59, 35, 125, .78), rgba(8, 2, 30, .94));
+      border: 1px solid rgba(218, 190, 255, .28);
+      box-shadow:
+        0 24px 62px rgba(0,0,0,.42),
+        0 0 0 8px rgba(128, 85, 255, .13),
+        0 0 42px rgba(142, 80, 255, .42),
+        inset 0 2px 0 rgba(255,255,255,.17),
+        inset 0 -24px 45px rgba(0,0,0,.30);
+    }
+    .board-card::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
       border-radius: 28px;
-      background: radial-gradient(circle at 50% 20%, rgba(153, 118, 255, .24), transparent 36%), linear-gradient(180deg, rgba(51, 32, 111, .66), rgba(7, 2, 25, .78));
-      box-shadow: inset 0 2px 0 rgba(255,255,255,.12), inset 0 -15px 35px rgba(0,0,0,.33), 0 0 0 1px rgba(255,255,255,.08);
+      border: 1px solid rgba(233, 211, 255, .22);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.4), inset 0 20px 45px rgba(255,255,255,.035);
       pointer-events: none;
     }
+    .board-card::after {
+      content: "";
+      position: absolute;
+      inset: -28% -34%;
+      background: radial-gradient(circle, rgba(143,95,255,.24), transparent 44%);
+      transform: translateY(-20%);
+      pointer-events: none;
+    }
+
     .board {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
+      position: absolute;
+      inset: 0;
+      z-index: 2;
       perspective: 900px;
       transform-style: preserve-3d;
     }
 
     .cell {
+      --w: 80px;
+      --h: 70px;
       position: absolute;
-      width: var(--hexW, 74px);
-      height: var(--hexH, 64px);
+      width: var(--w);
+      height: var(--h);
       transform: translate(-50%, -50%);
       display: grid;
       place-items: center;
       cursor: pointer;
-      transition: transform .16s ease, filter .16s ease;
+      transition: filter .14s ease, transform .14s ease;
     }
     .cell::before,
-    .cell::after {
+    .cell::after,
+    .cell .slot-shine {
       content: "";
       position: absolute;
-      inset: 0;
       clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
     }
     .cell::before {
-      background: linear-gradient(155deg, rgba(209, 177, 255, .42), rgba(59, 36, 118, .32) 40%, rgba(4, 0, 18, .76));
-      filter: drop-shadow(0 10px 12px rgba(0,0,0,.48));
+      inset: 0;
+      background: linear-gradient(145deg, rgba(209,184,255,.46), rgba(74,45,142,.28) 42%, rgba(7,2,28,.76));
+      filter: drop-shadow(0 14px 13px rgba(0,0,0,.52));
     }
     .cell::after {
       inset: 7px;
-      background: radial-gradient(circle at 38% 24%, rgba(255,255,255,.12), transparent 30%), linear-gradient(180deg, rgba(28, 19, 65, .9), rgba(3, 0, 14, .94));
-      box-shadow: inset 0 9px 14px rgba(255,255,255,.05), inset 0 -12px 18px rgba(0,0,0,.7);
+      background:
+        radial-gradient(circle at 30% 24%, rgba(255,255,255,.18), transparent 15%),
+        linear-gradient(180deg, rgba(31,22,70,.93), rgba(4,0,18,.96));
+      box-shadow: inset 0 8px 13px rgba(255,255,255,.06), inset 0 -12px 22px rgba(0,0,0,.78);
     }
-    .cell.target { transform: translate(-50%, -50%) scale(1.08); filter: drop-shadow(0 0 18px rgba(199,154,255,.8)); }
-    .cell.invalid { filter: grayscale(.7) brightness(.8); }
+    .cell .slot-shine {
+      left: 18%; top: 12%; width: 31%; height: 23%;
+      background: rgba(255,255,255,.12);
+      filter: blur(7px);
+      z-index: 1;
+    }
+    .cell.target { transform: translate(-50%, -50%) scale(1.08); filter: drop-shadow(0 0 22px rgba(230,210,255,.90)); }
+    .cell.busy-target { filter: grayscale(.55) brightness(.72); }
 
     .stack {
       position: absolute;
-      left: 50%; top: 50%;
-      width: var(--hexW, 74px);
-      height: calc(var(--hexH, 64px) + 38px);
-      transform: translate(-50%, -62%);
+      left: 50%;
+      top: 50%;
+      width: var(--w);
+      height: calc(var(--h) + 38px);
+      transform: translate(-50%, -64%);
       transform-style: preserve-3d;
-      z-index: 5;
       pointer-events: none;
-      filter: drop-shadow(0 17px 14px rgba(0,0,0,.55));
+      z-index: 5;
+      filter: drop-shadow(0 18px 16px rgba(0,0,0,.58));
     }
     .tile {
       position: absolute;
       left: 0;
-      bottom: var(--y, 0px);
-      width: var(--hexW, 74px);
-      height: var(--hexH, 64px);
+      bottom: var(--y);
+      width: var(--w);
+      height: var(--h);
       clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
-      background: var(--c);
-      border: 2px solid rgba(255,255,255,.52);
-      box-shadow: inset 0 12px 11px rgba(255,255,255,.35), inset 0 -15px 14px rgba(0,0,0,.25), 0 5px 0 var(--dark), 0 0 18px var(--glow);
+      background: var(--grad);
+      border: 2px solid rgba(255,255,255,.58);
+      box-shadow:
+        inset 0 12px 13px rgba(255,255,255,.36),
+        inset 0 -15px 15px rgba(0,0,0,.27),
+        0 7px 0 var(--dark),
+        0 0 20px var(--glow);
     }
     .tile::before {
       content: "";
       position: absolute;
       left: 16%; top: 8%;
-      width: 42%; height: 28%;
+      width: 42%; height: 26%;
       border-radius: 999px;
-      background: rgba(255,255,255,.55);
+      background: rgba(255,255,255,.62);
       filter: blur(9px);
-      transform: rotate(-18deg);
+      transform: rotate(-16deg);
     }
-
-    .combo-float, .particle {
+    .tile::after {
+      content: "";
       position: absolute;
-      z-index: 50;
-      pointer-events: none;
-      font-weight: 950;
-      text-shadow: 0 2px 12px rgba(0,0,0,.7);
+      inset: 4px;
+      clip-path: inherit;
+      border: 1px solid rgba(255,255,255,.20);
     }
-    .combo-float { font-size: 26px; animation: floatUp .78s ease forwards; }
-    @keyframes floatUp { to { transform: translateY(-70px) scale(1.15); opacity: 0; } }
-    .particle {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: var(--p);
-      box-shadow: 0 0 16px var(--p);
-      animation: popParticle .66s ease-out forwards;
-    }
-    @keyframes popParticle { to { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
 
-    .tool-row {
+    .tools {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      margin: 12px 0 10px;
     }
-    .tool-card {
+    .tool {
+      height: 55px;
+      border: 0;
       border-radius: 18px;
-      min-height: 58px;
-      display: grid;
-      place-items: center;
-      padding: 6px;
       cursor: pointer;
+      padding: 5px 4px;
       position: relative;
-      transition: transform .14s ease, filter .14s ease;
     }
-    .tool-card:active { transform: translateY(2px) scale(.98); }
-    .tool-card.active { outline: 2px solid rgba(255,255,255,.88); filter: drop-shadow(0 0 18px rgba(255,255,255,.3)); }
-    .tool-icon { font-size: 22px; line-height: 1; }
-    .tool-name { font-size: 10px; color: var(--muted); font-weight: 800; margin-top: 3px; }
+    .tool:active { transform: translateY(2px) scale(.985); }
+    .tool.active { outline: 2px solid rgba(255,255,255,.88); filter: drop-shadow(0 0 20px rgba(190,150,255,.55)); }
+    .tool .ico { display: block; font-size: 20px; line-height: 22px; }
+    .tool .txt { display: block; margin-top: 3px; font-size: 10px; color: var(--muted); font-weight: 1000; }
     .badge {
       position: absolute;
-      right: 6px; top: 5px;
-      min-width: 20px;
-      height: 20px;
+      top: 5px; right: 6px;
+      min-width: 20px; height: 20px; padding: 0 6px;
       border-radius: 999px;
-      padding: 0 6px;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(180deg, #ffe48a, #ff9f1c);
-      color: #291100;
+      display: grid; place-items: center;
+      background: linear-gradient(180deg, #fff0a3, #ffad31);
+      color: #260d00;
+      box-shadow: 0 6px 12px rgba(0,0,0,.32);
       font-size: 12px;
-      font-weight: 950;
-      box-shadow: 0 4px 10px rgba(0,0,0,.35);
+      font-weight: 1000;
     }
 
     .tray {
-      height: 136px;
-      border-radius: 28px;
-      padding: 13px 13px 11px;
+      height: 116px;
+      border-radius: 27px;
+      padding: 11px;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
       position: relative;
+      overflow: hidden;
+    }
+    .tray::before {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border-radius: 21px;
+      border: 1px solid rgba(255,255,255,.08);
+      pointer-events: none;
     }
     .piece {
-      border-radius: 22px;
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      min-width: 0;
       border: 1px solid rgba(255,255,255,.12);
+      border-radius: 21px;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.035));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.11);
       position: relative;
       cursor: grab;
       overflow: hidden;
-      display: grid;
-      place-items: center;
-      min-width: 0;
     }
-    .piece.selected { outline: 2px solid rgba(255,255,255,.84); box-shadow: 0 0 26px rgba(168,122,255,.5); }
-    .piece .stack { --hexW: 68px; --hexH: 59px; top: 56%; transform: translate(-50%, -58%) scale(.92); }
-    .piece.empty { opacity: .35; cursor: default; }
+    .piece.selected { outline: 2px solid rgba(255,255,255,.86); box-shadow: 0 0 26px rgba(167,117,255,.45), inset 0 1px 0 rgba(255,255,255,.14); }
+    .piece .stack { --w: 62px; --h: 54px; transform: translate(-50%, -57%) scale(.88); top: 59%; }
     .piece::after {
       content: "";
       position: absolute;
-      inset: -60% auto auto -50%;
-      width: 80px; height: 210px;
-      transform: rotate(22deg);
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.09), transparent);
+      width: 78px; height: 180px;
+      left: -60px; top: -70px;
+      transform: rotate(25deg);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent);
     }
-    .drag-ghost {
+
+    .ghost {
       position: fixed;
       left: 0; top: 0;
-      width: 84px;
-      height: 100px;
-      z-index: 999;
+      width: 90px; height: 110px;
+      z-index: 9999;
       pointer-events: none;
-      transform: translate(-50%, -50%) scale(1.08);
-      filter: drop-shadow(0 25px 22px rgba(0,0,0,.6));
+      transform: translate(-50%, -50%);
     }
-    .drag-ghost .stack { --hexW: 84px; --hexH: 73px; }
+    .ghost .stack { --w: 82px; --h: 71px; transform: translate(-50%, -55%) scale(1.05); }
+
+    .toast, .floating {
+      position: absolute;
+      z-index: 40;
+      pointer-events: none;
+      font-weight: 1000;
+      text-shadow: 0 3px 14px rgba(0,0,0,.7);
+    }
+    .toast {
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%) scale(.98);
+      max-width: 88%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      background: rgba(8, 2, 28, .90);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 17px 40px rgba(0,0,0,.44);
+      text-align: center;
+      opacity: 0;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    .floating { font-size: 26px; animation: float .75s ease forwards; }
+    @keyframes float { to { transform: translateY(-70px) scale(1.12); opacity: 0; } }
+    .spark {
+      position: absolute;
+      z-index: 35;
+      width: 9px; height: 9px;
+      border-radius: 999px;
+      background: var(--spark);
+      box-shadow: 0 0 15px var(--spark);
+      animation: spark .66s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes spark { to { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
 
     .overlay {
       position: absolute;
       inset: 0;
-      z-index: 1000;
+      z-index: 200;
       display: none;
       place-items: center;
-      background: rgba(4, 0, 16, .68);
+      padding: 18px;
+      background: rgba(5,0,18,.72);
       backdrop-filter: blur(10px);
-      padding: 20px;
     }
     .overlay.show { display: grid; }
     .modal {
-      width: min(420px, 92vw);
-      border-radius: 32px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: linear-gradient(180deg, rgba(64,35,132,.96), rgba(15,5,46,.96));
-      box-shadow: 0 28px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.18);
+      width: min(420px, 94vw);
       padding: 25px;
+      border-radius: 32px;
       text-align: center;
+      border: 1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(72,40,149,.97), rgba(18,5,51,.97));
+      box-shadow: 0 28px 80px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.16);
     }
-    .modal h2 { margin: 0 0 8px; font-size: 34px; letter-spacing: -.04em; }
+    .modal h2 { margin: 0 0 8px; font-size: 34px; letter-spacing: -.05em; }
     .modal p { margin: 0 0 18px; color: var(--muted); line-height: 1.45; }
     .btn {
-      appearance: none;
+      width: 100%;
       border: 0;
       border-radius: 20px;
       padding: 14px 18px;
-      width: 100%;
-      background: linear-gradient(180deg, #fff, #d8c2ff);
-      color: #1b0645;
-      font-weight: 950;
+      background: linear-gradient(180deg, #fff, #d9c2ff);
+      color: #190540;
+      font-weight: 1000;
       font-size: 16px;
+      box-shadow: 0 9px 0 #7951d8, 0 18px 28px rgba(0,0,0,.34);
       cursor: pointer;
-      box-shadow: 0 9px 0 #7b4ee2, 0 18px 28px rgba(0,0,0,.32);
     }
-    .btn:active { transform: translateY(5px); box-shadow: 0 4px 0 #7b4ee2, 0 10px 18px rgba(0,0,0,.32); }
+    .btn:active { transform: translateY(5px); box-shadow: 0 4px 0 #7951d8, 0 10px 18px rgba(0,0,0,.34); }
 
-    .toast {
-      position: absolute;
-      left: 50%; top: 50%;
-      z-index: 1200;
-      transform: translate(-50%, -50%);
-      max-width: 86%;
-      padding: 12px 16px;
-      border-radius: 18px;
-      background: rgba(9, 2, 30, .88);
-      border: 1px solid rgba(255,255,255,.16);
-      box-shadow: 0 15px 40px rgba(0,0,0,.4);
-      color: #fff;
-      font-weight: 900;
-      text-align: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .2s ease, transform .2s ease;
+    @media (max-height: 760px) {
+      .app { min-height: 0; gap: 7px; padding-left: 12px; padding-right: 12px; }
+      .stat { min-height: 49px; padding: 8px 9px; }
+      .stat span { font-size: 19px; margin-top: 4px; }
+      h1 { font-size: clamp(27px, 6.3vw, 40px); }
+      .mission { min-height: 56px; padding: 8px 10px; grid-template-columns: 46px 1fr; }
+      .mission-hex { width: 46px; height: 46px; }
+      .board-card { width: min(100%, 500px, calc(100dvh - 350px)); min-width: 285px; }
+      .tool { height: 50px; }
+      .tray { height: 100px; padding: 9px; }
+      .piece .stack { transform: translate(-50%, -57%) scale(.76); }
     }
-    .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
 
-    @media (max-height: 720px) {
-      .game { min-height: 0; height: 100vh; }
-      .title-row { margin-bottom: 7px; }
-      .hud-card { min-height: 56px; padding: 8px; }
-      .value { font-size: 18px; }
-      .order-card { margin-bottom: 8px; padding: 8px 10px; }
-      .board-shell { height: 46vh; min-height: 320px; }
-      .tool-row { margin: 8px 0; }
-      .tray { height: 118px; }
-      .piece .stack { transform: translate(-50%, -57%) scale(.82); }
+    @media (max-width: 410px) {
+      .app { padding-left: 10px; padding-right: 10px; }
+      .hud { gap: 6px; }
+      .stat b { font-size: 9px; }
+      .stat span { font-size: 18px; }
+      .combo { min-width: 74px; padding: 8px 10px; font-size: 12px; }
+      .board-card { min-width: 280px; }
+      .tools { gap: 6px; }
+      .tool .txt { font-size: 9px; }
+      .tray { gap: 7px; }
     }
   </style>
 </head>
 <body>
-  <main class="game" id="game">
-    <div class="aurora"></div>
-    <section class="topbar" aria-label="Игровая статистика">
-      <div class="hud-card"><span class="label">Счёт</span><span class="value" id="score">0</span></div>
-      <div class="hud-card"><span class="label">Лучший</span><span class="value" id="best">0</span></div>
-      <div class="hud-card"><span class="label">Монеты</span><span class="value small" id="coins">0</span></div>
+  <main class="app" id="app">
+    <section class="hud" aria-label="Статистика">
+      <div class="stat glass"><b>Счёт</b><span id="score">0</span></div>
+      <div class="stat glass"><b>Лучший</b><span id="best">0</span></div>
+      <div class="stat glass"><b>Монеты</b><span class="coins" id="coins">0</span></div>
     </section>
 
-    <div class="title-row">
+    <section class="hero">
       <h1>Гекса<br>Сорт 3D</h1>
-      <div class="pill" id="comboPill">Комбо ×1</div>
-    </div>
+      <div class="combo" id="combo">Комбо ×1</div>
+    </section>
 
-    <section class="order-card" id="orderCard">
-      <div class="order-gem"><div class="hex-face"></div></div>
-      <div class="order-text">
-        <strong id="orderTitle">Заказ цвета</strong>
-        <div class="progress"><i id="orderBar"></i></div>
-        <div class="hint" id="orderHint">Собери цветные верхушки в группы 3+</div>
+    <section class="mission glass" id="mission">
+      <div class="mission-hex" aria-hidden="true"></div>
+      <div>
+        <div class="mission-title"><span id="missionTitle">Заказ</span><small id="missionText">0/0</small></div>
+        <div class="bar"><i id="missionBar"></i></div>
       </div>
     </section>
 
-    <section class="board-shell">
-      <div class="board" id="board" aria-label="Игровое поле"></div>
+    <section class="board-zone">
+      <div class="board-card" id="boardCard">
+        <div class="board" id="board"></div>
+      </div>
     </section>
 
-    <section class="tool-row">
-      <button class="tool-card" id="toolHammer" type="button"><span class="badge" id="hammerCount">2</span><span class="tool-icon">🔨</span><span class="tool-name">Убрать</span></button>
-      <button class="tool-card" id="toolBomb" type="button"><span class="badge" id="bombCount">1</span><span class="tool-icon">💥</span><span class="tool-name">Бомба</span></button>
-      <button class="tool-card" id="toolShuffle" type="button"><span class="badge" id="shuffleCount">2</span><span class="tool-icon">🔄</span><span class="tool-name">Реролл</span></button>
-      <button class="tool-card" id="toolAd" type="button"><span class="tool-icon">🎁</span><span class="tool-name">Бонус</span></button>
+    <section class="tools">
+      <button class="tool glass" id="hammer" type="button"><span class="badge" id="hammerN">2</span><span class="ico">🔨</span><span class="txt">Убрать</span></button>
+      <button class="tool glass" id="bomb" type="button"><span class="badge" id="bombN">1</span><span class="ico">💥</span><span class="txt">Бомба</span></button>
+      <button class="tool glass" id="reroll" type="button"><span class="badge" id="rerollN">2</span><span class="ico">🔄</span><span class="txt">Реролл</span></button>
+      <button class="tool glass" id="gift" type="button"><span class="ico">🎁</span><span class="txt">Бонус</span></button>
     </section>
 
-    <section class="tray" id="tray" aria-label="Доступные стеки"></section>
+    <section class="tray glass" id="tray" aria-label="Стеки"></section>
 
     <div class="toast" id="toast"></div>
     <section class="overlay" id="overlay">
       <div class="modal">
         <h2>Поле заполнено</h2>
-        <p id="gameoverText">Попробуй ещё раз и собери больше цветных комбо.</p>
-        <button class="btn" id="restartBtn" type="button">Играть снова</button>
+        <p id="finishText">Собери больше комбо в следующей попытке.</p>
+        <button class="btn" id="restart" type="button">Играть снова</button>
       </div>
     </section>
   </main>
@@ -472,67 +533,53 @@
   (() => {
     'use strict';
 
-    const COLORS = [
-      { id: 'lime', name: 'лайм', solid: '#58f56c', grad: 'linear-gradient(145deg,#b7ffb8 0%,#51f16c 43%,#16a841 100%)', dark: '#0f7c33', glow: 'rgba(88,245,108,.65)' },
-      { id: 'pink', name: 'розовый', solid: '#ff4f88', grad: 'linear-gradient(145deg,#ffc5d4 0%,#ff4f88 44%,#b8194e 100%)', dark: '#922048', glow: 'rgba(255,79,136,.65)' },
-      { id: 'cyan', name: 'бирюза', solid: '#4ee9ff', grad: 'linear-gradient(145deg,#c8fbff 0%,#4ee9ff 45%,#137ea8 100%)', dark: '#146b88', glow: 'rgba(78,233,255,.62)' },
-      { id: 'gold', name: 'золото', solid: '#ffd166', grad: 'linear-gradient(145deg,#fff1b4 0%,#ffd166 44%,#d47718 100%)', dark: '#a75d12', glow: 'rgba(255,209,102,.62)' },
-      { id: 'violet', name: 'фиолетовый', solid: '#a66bff', grad: 'linear-gradient(145deg,#ead7ff 0%,#a66bff 44%,#5921bd 100%)', dark: '#4f238f', glow: 'rgba(166,107,255,.66)' },
-      { id: 'orange', name: 'апельсин', solid: '#ff7b45', grad: 'linear-gradient(145deg,#ffd0a8 0%,#ff7b45 45%,#b53217 100%)', dark: '#9d301c', glow: 'rgba(255,123,69,.62)' }
+    const colors = [
+      { id:'green', name:'зелёный', solid:'#55f777', grad:'linear-gradient(145deg,#caffc8 0%,#55f777 42%,#15a844 100%)', dark:'#087e31', glow:'rgba(85,247,119,.72)' },
+      { id:'pink', name:'розовый', solid:'#ff4f88', grad:'linear-gradient(145deg,#ffc2d3 0%,#ff4f88 44%,#b81b4e 100%)', dark:'#8d183d', glow:'rgba(255,79,136,.74)' },
+      { id:'cyan', name:'бирюза', solid:'#4feaff', grad:'linear-gradient(145deg,#caffff 0%,#4feaff 43%,#167fa8 100%)', dark:'#0a6987', glow:'rgba(79,234,255,.72)' },
+      { id:'gold', name:'золото', solid:'#ffd66d', grad:'linear-gradient(145deg,#fff0a9 0%,#ffd66d 43%,#d07419 100%)', dark:'#a35b12', glow:'rgba(255,214,109,.72)' },
+      { id:'violet', name:'фиолетовый', solid:'#a86cff', grad:'linear-gradient(145deg,#ead7ff 0%,#a86cff 43%,#5b22bd 100%)', dark:'#4c1f8e', glow:'rgba(168,108,255,.76)' },
+      { id:'orange', name:'оранжевый', solid:'#ff7a45', grad:'linear-gradient(145deg,#ffd0ad 0%,#ff7a45 45%,#b83818 100%)', dark:'#963018', glow:'rgba(255,122,69,.72)' }
     ];
 
+    const cellsPattern = [
+      { r:0, c:0 }, { r:0, c:1 }, { r:0, c:2 },
+      { r:1, c:0 }, { r:1, c:1 }, { r:1, c:2 }, { r:1, c:3 },
+      { r:2, c:0 }, { r:2, c:1 }, { r:2, c:2 }
+    ];
+
+    const $ = id => document.getElementById(id);
     const els = {
-      game: document.getElementById('game'),
-      board: document.getElementById('board'),
-      tray: document.getElementById('tray'),
-      score: document.getElementById('score'),
-      best: document.getElementById('best'),
-      coins: document.getElementById('coins'),
-      comboPill: document.getElementById('comboPill'),
-      orderCard: document.getElementById('orderCard'),
-      orderTitle: document.getElementById('orderTitle'),
-      orderHint: document.getElementById('orderHint'),
-      orderBar: document.getElementById('orderBar'),
-      overlay: document.getElementById('overlay'),
-      gameoverText: document.getElementById('gameoverText'),
-      restartBtn: document.getElementById('restartBtn'),
-      toast: document.getElementById('toast'),
-      hammerBtn: document.getElementById('toolHammer'),
-      bombBtn: document.getElementById('toolBomb'),
-      shuffleBtn: document.getElementById('toolShuffle'),
-      adBtn: document.getElementById('toolAd'),
-      hammerCount: document.getElementById('hammerCount'),
-      bombCount: document.getElementById('bombCount'),
-      shuffleCount: document.getElementById('shuffleCount')
+      app: $('app'), boardCard: $('boardCard'), board: $('board'), tray: $('tray'),
+      score: $('score'), best: $('best'), coins: $('coins'), combo: $('combo'),
+      mission: $('mission'), missionTitle: $('missionTitle'), missionText: $('missionText'), missionBar: $('missionBar'),
+      hammer: $('hammer'), bomb: $('bomb'), reroll: $('reroll'), gift: $('gift'),
+      hammerN: $('hammerN'), bombN: $('bombN'), rerollN: $('rerollN'),
+      toast: $('toast'), overlay: $('overlay'), finishText: $('finishText'), restart: $('restart')
     };
 
-    const rows = [3, 4, 5, 4, 3];
     const state = {
-      cells: [],
-      pieces: [],
-      selectedPiece: null,
-      activeTool: null,
-      dragging: null,
-      score: 0,
-      best: Number(localStorage.getItem('hexaSortBest') || 0),
-      coins: Number(localStorage.getItem('hexaSortCoins') || 0),
-      combo: 1,
-      power: { hammer: 2, bomb: 1, shuffle: 2 },
-      order: null,
-      audio: null,
-      ya: null
+      cells: [], pieces: [], selected: null, tool: null, dragging: null,
+      score: 0, combo: 1,
+      best: Number(localStorage.getItem('gs3d_best') || 0),
+      coins: Number(localStorage.getItem('gs3d_coins') || 0),
+      bonus: { hammer: 2, bomb: 1, reroll: 2 },
+      mission: null, ysdk: null, audio: null
     };
+
+    function byId(id) { return colors.find(c => c.id === id) || colors[0]; }
+    function rnd(n) { return Math.floor(Math.random() * n); }
+    function fmt(n) { return Number(n).toLocaleString('ru-RU'); }
 
     function initYandex() {
-      if (window.YaGames && typeof YaGames.init === 'function') {
-        YaGames.init().then(ysdk => {
-          state.ya = ysdk;
-          try { ysdk.features.LoadingAPI?.ready(); } catch (e) {}
-        }).catch(() => {});
-      }
+      if (!window.YaGames || typeof YaGames.init !== 'function') return;
+      YaGames.init().then(ysdk => {
+        state.ysdk = ysdk;
+        try { ysdk.features.LoadingAPI?.ready(); } catch (e) {}
+      }).catch(() => {});
     }
 
-    function makeAudio() {
+    function audio() {
       if (state.audio) return state.audio;
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return null;
@@ -540,127 +587,103 @@
       return state.audio;
     }
 
-    function sound(type = 'tap') {
-      const ctx = makeAudio();
+    function sfx(type) {
+      const ctx = audio();
       if (!ctx) return;
       const now = ctx.currentTime;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      const map = { tap: [420, .035], place: [560, .055], pop: [760, .09], bad: [150, .08], win: [960, .12] };
+      const map = { tap:[420,.035], place:[560,.06], pop:[840,.10], bad:[150,.08], win:[980,.14] };
       const [freq, dur] = map[type] || map.tap;
       osc.type = type === 'bad' ? 'sawtooth' : 'sine';
       osc.frequency.setValueAtTime(freq, now);
-      osc.frequency.exponentialRampToValueAtTime(type === 'win' ? freq * 1.5 : freq * .72, now + dur);
+      osc.frequency.exponentialRampToValueAtTime(type === 'win' ? freq * 1.38 : Math.max(80, freq * .72), now + dur);
       gain.gain.setValueAtTime(.0001, now);
-      gain.gain.exponentialRampToValueAtTime(.07, now + .01);
+      gain.gain.exponentialRampToValueAtTime(type === 'bad' ? .045 : .07, now + .01);
       gain.gain.exponentialRampToValueAtTime(.0001, now + dur);
       osc.connect(gain).connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + dur + .02);
+      osc.stop(now + dur + .03);
     }
 
-    function colorById(id) { return COLORS.find(c => c.id === id) || COLORS[0]; }
-    function rand(max) { return Math.floor(Math.random() * max); }
-    function pickColor(bias) {
-      if (bias && Math.random() < .42) return bias;
-      return COLORS[rand(COLORS.length)].id;
-    }
-
-    function newPiece() {
-      const len = 3 + rand(3);
-      const bias = COLORS[rand(COLORS.length)].id;
+    function makePiece() {
+      const len = 3 + rnd(3);
+      const base = colors[rnd(colors.length)].id;
       const stack = [];
-      for (let i = 0; i < len; i++) stack.push(pickColor(i > 0 && Math.random() < .55 ? stack[i - 1] : bias));
+      for (let i = 0; i < len; i++) {
+        if (i && Math.random() < .55) stack.push(stack[i - 1]);
+        else if (Math.random() < .45) stack.push(base);
+        else stack.push(colors[rnd(colors.length)].id);
+      }
       return stack;
     }
 
-    function newOrder() {
-      const c = COLORS[rand(COLORS.length)];
-      state.order = { color: c.id, target: 16 + rand(10), count: 0 };
-      renderOrder();
-    }
-
-    function renderOrder() {
-      const c = colorById(state.order.color);
-      els.orderCard.style.setProperty('--goalColor', c.grad);
-      els.orderCard.style.setProperty('--goalSolid', c.solid);
-      els.orderTitle.textContent = `Заказ: ${c.name}`;
-      els.orderHint.textContent = `${state.order.count}/${state.order.target} плиток собрано`;
-      els.orderBar.style.width = `${Math.min(100, state.order.count / state.order.target * 100)}%`;
-    }
-
-    function buildBoard() {
-      state.cells = [];
+    function buildCells() {
       els.board.innerHTML = '';
-      let id = 0;
-      rows.forEach((count, r) => {
-        for (let c = 0; c < count; c++) {
-          const cell = { id, row: r, col: c, stack: [], el: null, x: 0, y: 0, neigh: [] };
-          const el = document.createElement('div');
-          el.className = 'cell';
-          el.dataset.cell = String(id);
-          el.addEventListener('click', () => onCellClick(cell));
-          cell.el = el;
-          state.cells.push(cell);
-          els.board.appendChild(el);
-          id++;
-        }
+      state.cells = cellsPattern.map((p, id) => {
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'cell';
+        el.dataset.id = String(id);
+        el.innerHTML = '<i class="slot-shine"></i>';
+        el.addEventListener('click', () => clickCell(id));
+        els.board.appendChild(el);
+        return { ...p, id, el, stack: [], x: 0, y: 0, neigh: [] };
       });
-      layoutBoard();
-      window.addEventListener('resize', layoutBoard);
+      layoutCells();
+      window.addEventListener('resize', layoutCells);
     }
 
-    function layoutBoard() {
-      const rect = els.board.getBoundingClientRect();
-      const usableW = Math.max(280, rect.width - 18);
-      const usableH = Math.max(300, rect.height - 18);
-      const hexW = Math.min(78, Math.max(55, usableW / 5.45));
-      const hexH = hexW * .86;
-      const stepX = hexW * .88;
-      const stepY = hexH * .88;
-      const totalH = stepY * (rows.length - 1) + hexH;
-      const top = (usableH - totalH) / 2 + hexH * .55 + 4;
-      let id = 0;
-      rows.forEach((count, r) => {
-        const rowW = (count - 1) * stepX + hexW;
-        const startX = rect.width / 2 - rowW / 2 + hexW / 2;
-        for (let c = 0; c < count; c++) {
-          const cell = state.cells[id++];
-          cell.x = startX + c * stepX;
-          cell.y = top + r * stepY;
-          cell.el.style.left = `${cell.x}px`;
-          cell.el.style.top = `${cell.y}px`;
-          cell.el.style.setProperty('--hexW', `${hexW}px`);
-          cell.el.style.setProperty('--hexH', `${hexH}px`);
-        }
+    function layoutCells() {
+      const box = els.boardCard.getBoundingClientRect();
+      const size = Math.min(box.width, box.height);
+      const w = Math.max(58, Math.min(84, size / 6.3));
+      const h = w * .86;
+      const dx = w * 1.25;
+      const dy = h * 1.31;
+      const cx = box.width / 2;
+      const cy = box.height / 2 + h * .20;
+      const rows = {
+        0: [-1, 0, 1],
+        1: [-1.5, -.5, .5, 1.5],
+        2: [-1, 0, 1]
+      };
+      state.cells.forEach(cell => {
+        cell.x = cx + rows[cell.r][cell.c] * dx;
+        cell.y = cy + (cell.r - 1) * dy;
+        cell.el.style.left = cell.x + 'px';
+        cell.el.style.top = cell.y + 'px';
+        cell.el.style.setProperty('--w', w + 'px');
+        cell.el.style.setProperty('--h', h + 'px');
       });
-      computeNeighbors(hexW * 1.05);
+      computeNeighbors(dx * 1.06);
       renderBoard();
     }
 
-    function computeNeighbors(limit) {
+    function computeNeighbors(maxDist) {
       state.cells.forEach(c => c.neigh = []);
       for (let i = 0; i < state.cells.length; i++) {
         for (let j = i + 1; j < state.cells.length; j++) {
           const a = state.cells[i], b = state.cells[j];
-          const d = Math.hypot(a.x - b.x, a.y - b.y);
-          if (d < limit) { a.neigh.push(b.id); b.neigh.push(a.id); }
+          if (Math.hypot(a.x - b.x, a.y - b.y) <= maxDist) {
+            a.neigh.push(j);
+            b.neigh.push(i);
+          }
         }
       }
     }
 
-    function createStack(stack, scaleClass = '') {
+    function stackEl(stack) {
       const wrap = document.createElement('div');
-      wrap.className = `stack ${scaleClass}`.trim();
-      const visible = stack.slice(-8);
-      visible.forEach((id, i) => {
-        const c = colorById(id);
-        const tile = document.createElement('div');
+      wrap.className = 'stack';
+      stack.slice(-6).forEach((colorId, i) => {
+        const color = byId(colorId);
+        const tile = document.createElement('i');
         tile.className = 'tile';
-        tile.style.setProperty('--y', `${i * 7}px`);
-        tile.style.setProperty('--c', c.grad);
-        tile.style.setProperty('--dark', c.dark);
-        tile.style.setProperty('--glow', c.glow);
+        tile.style.setProperty('--y', (i * 7) + 'px');
+        tile.style.setProperty('--grad', color.grad);
+        tile.style.setProperty('--dark', color.dark);
+        tile.style.setProperty('--glow', color.glow);
         tile.style.zIndex = String(i + 1);
         wrap.appendChild(tile);
       });
@@ -670,79 +693,99 @@
     function renderBoard() {
       state.cells.forEach(cell => {
         cell.el.querySelectorAll('.stack').forEach(n => n.remove());
-        cell.el.classList.toggle('invalid', cell.stack.length > 0 && state.selectedPiece !== null);
-        if (cell.stack.length) cell.el.appendChild(createStack(cell.stack));
+        cell.el.classList.toggle('busy-target', state.selected !== null && cell.stack.length > 0);
+        if (cell.stack.length) cell.el.appendChild(stackEl(cell.stack));
       });
     }
 
     function renderTray() {
       els.tray.innerHTML = '';
-      state.pieces.forEach((piece, index) => {
-        const el = document.createElement('div');
+      state.pieces.forEach((piece, i) => {
+        const el = document.createElement('button');
+        el.type = 'button';
         el.className = 'piece';
-        el.dataset.piece = String(index);
-        if (state.selectedPiece === index) el.classList.add('selected');
-        el.appendChild(createStack(piece));
-        el.addEventListener('click', () => selectPiece(index));
-        el.addEventListener('pointerdown', e => startDrag(e, index));
+        if (state.selected === i) el.classList.add('selected');
+        el.appendChild(stackEl(piece));
+        el.addEventListener('click', () => selectPiece(i));
+        el.addEventListener('pointerdown', e => startDrag(e, i));
         els.tray.appendChild(el);
       });
     }
 
     function renderHud() {
-      els.score.textContent = state.score.toLocaleString('ru-RU');
-      els.best.textContent = state.best.toLocaleString('ru-RU');
-      els.coins.textContent = state.coins.toLocaleString('ru-RU');
-      els.comboPill.textContent = `Комбо ×${state.combo}`;
-      els.hammerCount.textContent = state.power.hammer;
-      els.bombCount.textContent = state.power.bomb;
-      els.shuffleCount.textContent = state.power.shuffle;
-      localStorage.setItem('hexaSortCoins', String(state.coins));
-      localStorage.setItem('hexaSortBest', String(state.best));
+      els.score.textContent = fmt(state.score);
+      els.best.textContent = fmt(state.best);
+      els.coins.textContent = fmt(state.coins);
+      els.combo.textContent = 'Комбо ×' + state.combo;
+      els.hammerN.textContent = state.bonus.hammer;
+      els.bombN.textContent = state.bonus.bomb;
+      els.rerollN.textContent = state.bonus.reroll;
+      els.hammer.classList.toggle('active', state.tool === 'hammer');
+      els.bomb.classList.toggle('active', state.tool === 'bomb');
+      localStorage.setItem('gs3d_best', String(state.best));
+      localStorage.setItem('gs3d_coins', String(state.coins));
     }
 
-    function selectPiece(index) {
-      state.activeTool = null;
-      updateToolButtons();
-      state.selectedPiece = state.selectedPiece === index ? null : index;
-      sound('tap');
+    function newMission() {
+      const color = colors[rnd(colors.length)];
+      state.mission = { color: color.id, need: 12 + rnd(8), got: 0 };
+      renderMission();
+    }
+
+    function renderMission() {
+      const c = byId(state.mission.color);
+      els.mission.style.setProperty('--missionGrad', c.grad);
+      els.mission.style.setProperty('--missionSolid', c.solid);
+      els.mission.style.setProperty('--missionGlow', c.glow);
+      els.missionTitle.textContent = 'Заказ: ' + c.name;
+      els.missionText.textContent = `${state.mission.got}/${state.mission.need}`;
+      els.missionBar.style.width = Math.min(100, state.mission.got / state.mission.need * 100) + '%';
+    }
+
+    function selectPiece(i) {
+      state.tool = null;
+      state.selected = state.selected === i ? null : i;
+      sfx('tap');
+      renderHud();
       renderTray();
       renderBoard();
     }
 
-    function onCellClick(cell) {
-      if (state.activeTool) return useToolOnCell(cell);
-      if (state.selectedPiece !== null) placePiece(state.selectedPiece, cell);
+    function clickCell(id) {
+      const cell = state.cells[id];
+      if (state.tool) return useTool(cell);
+      if (state.selected === null) return toast('Выбери стек снизу');
+      placePiece(state.selected, cell);
     }
 
-    function placePiece(pieceIndex, cell) {
-      const piece = state.pieces[pieceIndex];
-      if (!piece || cell.stack.length) {
-        toast(cell.stack.length ? 'Сюда нельзя: слот уже занят' : 'Выбери стек снизу');
-        sound('bad');
+    function placePiece(index, cell) {
+      const piece = state.pieces[index];
+      if (!piece) return false;
+      if (cell.stack.length) {
+        toast('Этот слот уже занят');
+        sfx('bad');
         return false;
       }
       cell.stack = piece.slice();
-      state.pieces[pieceIndex] = newPiece();
-      state.selectedPiece = null;
-      state.combo = 1;
-      sound('place');
+      state.pieces[index] = makePiece();
+      state.selected = null;
+      sfx('place');
       renderTray();
       renderBoard();
-      setTimeout(() => resolveCombos(cell), 100);
+      setTimeout(() => resolveCombos(cell), 120);
       return true;
     }
 
-    function topColor(cell) { return cell.stack[cell.stack.length - 1]; }
+    function top(cell) { return cell.stack[cell.stack.length - 1]; }
 
-    function sameTopGroups() {
+    function groups() {
       const seen = new Set();
-      const groups = [];
+      const out = [];
       state.cells.forEach(start => {
-        const color = topColor(start);
+        const color = top(start);
         if (!color || seen.has(start.id)) return;
-        const group = [];
         const queue = [start.id];
+        const group = [];
         seen.add(start.id);
         while (queue.length) {
           const id = queue.shift();
@@ -750,174 +793,132 @@
           group.push(cell);
           cell.neigh.forEach(nid => {
             const n = state.cells[nid];
-            if (!seen.has(nid) && topColor(n) === color) {
+            if (!seen.has(nid) && top(n) === color) {
               seen.add(nid);
               queue.push(nid);
             }
           });
         }
-        if (group.length >= 3) groups.push({ color, cells: group });
+        if (group.length >= 3) out.push({ color, group });
       });
-      return groups;
+      return out;
     }
 
-    function resolveCombos(focusCell) {
-      const groups = sameTopGroups();
-      if (!groups.length) {
-        checkGameOver();
-        return;
-      }
+    function resolveCombos(focus) {
+      const found = groups();
+      if (!found.length) return checkOver();
       let delay = 0;
-      groups.forEach((group, idx) => {
-        setTimeout(() => clearGroup(group, focusCell || group.cells[0], idx), delay);
-        delay += 220;
+      found.forEach(pack => {
+        setTimeout(() => clearCombo(pack, focus || pack.group[0]), delay);
+        delay += 230;
       });
-      setTimeout(() => resolveCombos(focusCell), delay + 160);
+      setTimeout(() => resolveCombos(focus), delay + 130);
     }
 
-    function clearGroup(group, focusCell, idx) {
+    function clearCombo(pack, focus) {
+      const color = byId(pack.color);
       let removed = 0;
-      group.cells.forEach(cell => {
-        while (cell.stack.length && topColor(cell) === group.color) {
+      pack.group.forEach(cell => {
+        while (cell.stack.length && top(cell) === pack.color) {
           cell.stack.pop();
           removed++;
         }
       });
-      const c = colorById(group.color);
-      state.score += removed * 14 * state.combo;
+      const add = removed * 15 * state.combo;
+      state.score += add;
       state.coins += Math.max(1, Math.floor(removed / 2));
-      if (group.color === state.order.color) {
-        state.order.count += removed;
-        if (state.order.count >= state.order.target) completeOrder();
-        else renderOrder();
+      state.best = Math.max(state.best, state.score);
+      if (state.mission.color === pack.color) {
+        state.mission.got += removed;
+        if (state.mission.got >= state.mission.need) finishMission();
+        else renderMission();
       }
+      floatText('+' + add, focus, color.solid);
+      sparks(pack.group, color.solid);
       state.combo = Math.min(9, state.combo + 1);
-      if (state.score > state.best) state.best = state.score;
-      showCombo(`+${removed * 14}`, focusCell, c.solid);
-      popParticles(group.cells, c.solid);
-      sound(idx ? 'win' : 'pop');
+      sfx('pop');
       renderHud();
       renderBoard();
     }
 
-    function completeOrder() {
+    function finishMission() {
       state.coins += 25;
-      state.power.hammer += 1;
-      state.power.shuffle += 1;
-      toast('Заказ выполнен! +25 монет, +бонусы');
-      sound('win');
-      newOrder();
+      state.bonus.hammer += 1;
+      state.bonus.reroll += 1;
+      toast('Заказ выполнен! +25 монет');
+      sfx('win');
+      newMission();
     }
 
-    function showCombo(text, cell, color) {
-      const rect = els.game.getBoundingClientRect();
-      const boardRect = els.board.getBoundingClientRect();
-      const el = document.createElement('div');
-      el.className = 'combo-float';
-      el.textContent = text;
-      el.style.left = `${boardRect.left - rect.left + cell.x - 22}px`;
-      el.style.top = `${boardRect.top - rect.top + cell.y - 30}px`;
-      el.style.color = color;
-      els.game.appendChild(el);
-      setTimeout(() => el.remove(), 820);
-    }
-
-    function popParticles(cells, color) {
-      const gameRect = els.game.getBoundingClientRect();
-      const boardRect = els.board.getBoundingClientRect();
-      cells.forEach(cell => {
-        for (let i = 0; i < 7; i++) {
-          const p = document.createElement('div');
-          p.className = 'particle';
-          p.style.left = `${boardRect.left - gameRect.left + cell.x}px`;
-          p.style.top = `${boardRect.top - gameRect.top + cell.y}px`;
-          p.style.setProperty('--p', color);
-          p.style.setProperty('--dx', `${-45 + Math.random() * 90}px`);
-          p.style.setProperty('--dy', `${-55 + Math.random() * 80}px`);
-          els.game.appendChild(p);
-          setTimeout(() => p.remove(), 700);
-        }
-      });
-    }
-
-    function checkGameOver() {
-      if (state.cells.some(c => !c.stack.length)) return;
+    function checkOver() {
+      if (state.cells.some(cell => !cell.stack.length)) return;
       state.best = Math.max(state.best, state.score);
       renderHud();
       setTimeout(() => {
-        els.gameoverText.textContent = `Счёт: ${state.score.toLocaleString('ru-RU')}. Лучший: ${state.best.toLocaleString('ru-RU')}.`;
+        els.finishText.textContent = `Счёт: ${fmt(state.score)}. Лучший: ${fmt(state.best)}.`;
         els.overlay.classList.add('show');
-        try { state.ya?.adv?.showFullscreenAdv?.({ callbacks: {} }); } catch (e) {}
-      }, 400);
+        try { state.ysdk?.adv?.showFullscreenAdv?.({ callbacks: {} }); } catch (e) {}
+      }, 360);
     }
 
     function setTool(tool) {
-      state.selectedPiece = null;
-      state.activeTool = state.activeTool === tool ? null : tool;
-      sound('tap');
-      updateToolButtons();
+      state.selected = null;
+      state.tool = state.tool === tool ? null : tool;
+      renderHud();
       renderTray();
       renderBoard();
-      if (state.activeTool) toast(tool === 'hammer' ? 'Выбери стек, который убрать' : 'Выбери центр взрыва');
+      sfx('tap');
+      if (state.tool === 'hammer') toast('Нажми на стек, который убрать');
+      if (state.tool === 'bomb') toast('Нажми на центр взрыва');
     }
 
-    function updateToolButtons() {
-      els.hammerBtn.classList.toggle('active', state.activeTool === 'hammer');
-      els.bombBtn.classList.toggle('active', state.activeTool === 'bomb');
-      els.shuffleBtn.classList.toggle('active', state.activeTool === 'shuffle');
-    }
-
-    function useToolOnCell(cell) {
-      if (state.activeTool === 'hammer') {
-        if (!state.power.hammer) return toast('Молотков больше нет');
+    function useTool(cell) {
+      if (state.tool === 'hammer') {
+        if (state.bonus.hammer <= 0) return toast('Молотков нет');
         if (!cell.stack.length) return toast('Тут пусто');
-        state.power.hammer--;
+        state.bonus.hammer--;
         cell.stack = [];
-        state.activeTool = null;
-        sound('pop');
-        showCombo('CLEAR', cell, '#ffffff');
+        floatText('CLEAR', cell, '#fff');
+        sfx('pop');
       }
-      if (state.activeTool === 'bomb') {
-        if (!state.power.bomb) return toast('Бомб больше нет');
-        state.power.bomb--;
-        const targets = [cell, ...cell.neigh.map(id => state.cells[id])];
-        targets.forEach(c => c.stack = []);
-        state.activeTool = null;
-        sound('win');
-        showCombo('BOOM!', cell, '#ffd166');
-        popParticles(targets, '#ffd166');
+      if (state.tool === 'bomb') {
+        if (state.bonus.bomb <= 0) return toast('Бомб нет');
+        state.bonus.bomb--;
+        const list = [cell, ...cell.neigh.map(id => state.cells[id])];
+        list.forEach(c => c.stack = []);
+        sparks(list, '#ffd66d');
+        floatText('BOOM!', cell, '#ffd66d');
+        sfx('win');
       }
-      updateToolButtons();
+      state.tool = null;
       renderHud();
       renderBoard();
-      checkGameOver();
     }
 
-    function shufflePieces() {
-      if (!state.power.shuffle) return toast('Рероллов больше нет');
-      state.power.shuffle--;
-      state.pieces = [newPiece(), newPiece(), newPiece()];
-      state.activeTool = null;
-      state.selectedPiece = null;
-      sound('place');
+    function reroll() {
+      if (state.bonus.reroll <= 0) return toast('Рероллов нет');
+      state.bonus.reroll--;
+      state.pieces = [makePiece(), makePiece(), makePiece()];
+      state.selected = null;
+      state.tool = null;
+      sfx('place');
       renderHud();
       renderTray();
-      updateToolButtons();
+      renderBoard();
     }
 
-    function adReward() {
+    function gift() {
       const reward = () => {
         state.coins += 30;
-        state.power.hammer += 1;
-        state.power.bomb += 1;
-        state.power.shuffle += 1;
-        toast('Бонус получен: +30 монет и усиления');
+        state.bonus.hammer++;
+        state.bonus.bomb++;
+        state.bonus.reroll++;
+        toast('+30 монет и все бонусы');
         renderHud();
       };
       try {
-        if (state.ya?.adv?.showRewardedVideo) {
-          state.ya.adv.showRewardedVideo({ callbacks: { onRewarded: reward, onError: reward } });
-        } else reward();
+        if (state.ysdk?.adv?.showRewardedVideo) state.ysdk.adv.showRewardedVideo({ callbacks: { onRewarded: reward, onError: reward } });
+        else reward();
       } catch (e) { reward(); }
     }
 
@@ -925,59 +926,85 @@
       if (e.button !== undefined && e.button !== 0) return;
       const piece = state.pieces[index];
       if (!piece) return;
-      state.selectedPiece = index;
+      state.selected = index;
+      state.tool = null;
+      renderHud();
       renderTray();
       const ghost = document.createElement('div');
-      ghost.className = 'drag-ghost';
-      ghost.appendChild(createStack(piece));
+      ghost.className = 'ghost';
+      ghost.appendChild(stackEl(piece));
       document.body.appendChild(ghost);
       state.dragging = { index, ghost, target: null };
       moveDrag(e.clientX, e.clientY);
-      sound('tap');
+      sfx('tap');
       window.addEventListener('pointermove', onDragMove);
       window.addEventListener('pointerup', endDrag, { once: true });
     }
 
-    function onDragMove(e) { if (state.dragging) moveDrag(e.clientX, e.clientY); }
+    function onDragMove(e) { moveDrag(e.clientX, e.clientY); }
 
     function moveDrag(x, y) {
       const d = state.dragging;
       if (!d) return;
-      d.ghost.style.left = `${x}px`;
-      d.ghost.style.top = `${y}px`;
-      const old = d.target;
-      const cell = findCellAt(x, y);
+      d.ghost.style.left = x + 'px';
+      d.ghost.style.top = y + 'px';
+      const cell = nearestCell(x, y);
       d.target = cell && !cell.stack.length ? cell : null;
-      if (old !== d.target) {
-        state.cells.forEach(c => c.el.classList.toggle('target', d.target && c.id === d.target.id));
-      }
+      state.cells.forEach(c => c.el.classList.toggle('target', d.target && c.id === d.target.id));
     }
 
     function endDrag() {
       const d = state.dragging;
       if (!d) return;
       d.ghost.remove();
-      state.cells.forEach(c => c.el.classList.remove('target'));
       state.dragging = null;
       window.removeEventListener('pointermove', onDragMove);
+      state.cells.forEach(c => c.el.classList.remove('target'));
       if (d.target) placePiece(d.index, d.target);
-      else {
-        sound('bad');
-        renderTray();
-      }
+      else { sfx('bad'); renderTray(); }
     }
 
-    function findCellAt(x, y) {
-      const rect = els.board.getBoundingClientRect();
+    function nearestCell(x, y) {
+      const rect = els.boardCard.getBoundingClientRect();
       let best = null;
       let bestD = Infinity;
       state.cells.forEach(cell => {
-        const cx = rect.left + cell.x;
-        const cy = rect.top + cell.y;
-        const d = Math.hypot(x - cx, y - cy);
+        const d = Math.hypot(x - (rect.left + cell.x), y - (rect.top + cell.y));
         if (d < bestD) { bestD = d; best = cell; }
       });
-      return bestD < 54 ? best : null;
+      const w = parseFloat(getComputedStyle(best.el).getPropertyValue('--w')) || 78;
+      return bestD < w * .72 ? best : null;
+    }
+
+    function floatText(text, cell, color) {
+      const app = els.app.getBoundingClientRect();
+      const board = els.boardCard.getBoundingClientRect();
+      const el = document.createElement('div');
+      el.className = 'floating';
+      el.textContent = text;
+      el.style.left = (board.left - app.left + cell.x - 20) + 'px';
+      el.style.top = (board.top - app.top + cell.y - 28) + 'px';
+      el.style.color = color;
+      els.app.appendChild(el);
+      setTimeout(() => el.remove(), 780);
+    }
+
+    function sparks(list, color) {
+      const app = els.app.getBoundingClientRect();
+      const board = els.boardCard.getBoundingClientRect();
+      list.forEach(cell => {
+        for (let i = 0; i < 7; i++) {
+          const p = document.createElement('i');
+          p.className = 'spark';
+          p.style.left = (board.left - app.left + cell.x) + 'px';
+          p.style.top = (board.top - app.top + cell.y) + 'px';
+          p.style.setProperty('--spark', color);
+          p.style.setProperty('--dx', (-48 + Math.random() * 96) + 'px');
+          p.style.setProperty('--dy', (-58 + Math.random() * 90) + 'px');
+          els.app.appendChild(p);
+          setTimeout(() => p.remove(), 700);
+        }
+      });
     }
 
     let toastTimer = 0;
@@ -985,37 +1012,37 @@
       els.toast.textContent = text;
       els.toast.classList.add('show');
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => els.toast.classList.remove('show'), 1450);
+      toastTimer = setTimeout(() => els.toast.classList.remove('show'), 1350);
     }
 
-    function resetGame() {
+    function reset() {
       state.score = 0;
       state.combo = 1;
-      state.selectedPiece = null;
-      state.activeTool = null;
-      state.power = { hammer: 2, bomb: 1, shuffle: 2 };
+      state.selected = null;
+      state.tool = null;
+      state.bonus = { hammer: 2, bomb: 1, reroll: 2 };
       state.cells.forEach(c => c.stack = []);
-      const starters = [4, 8, 10].filter(i => state.cells[i]);
-      starters.forEach((id, i) => { state.cells[id].stack = [COLORS[i].id, COLORS[i].id, COLORS[(i + 1) % COLORS.length].id]; });
-      state.pieces = [newPiece(), newPiece(), newPiece()];
-      newOrder();
+      // аккуратный старт как на референсе: всего два 3D-стека, остальное чистое поле
+      state.cells[1].stack = ['green','green','green','green'];
+      state.cells[4].stack = ['pink','pink','pink','pink'];
+      state.pieces = [makePiece(), makePiece(), makePiece()];
+      newMission();
       els.overlay.classList.remove('show');
-      updateToolButtons();
       renderHud();
-      renderBoard();
       renderTray();
+      layoutCells();
     }
 
-    els.hammerBtn.addEventListener('click', () => setTool('hammer'));
-    els.bombBtn.addEventListener('click', () => setTool('bomb'));
-    els.shuffleBtn.addEventListener('click', shufflePieces);
-    els.adBtn.addEventListener('click', adReward);
-    els.restartBtn.addEventListener('click', resetGame);
-    document.addEventListener('pointerdown', () => { try { makeAudio()?.resume?.(); } catch (e) {} }, { once: true });
+    els.hammer.addEventListener('click', () => setTool('hammer'));
+    els.bomb.addEventListener('click', () => setTool('bomb'));
+    els.reroll.addEventListener('click', reroll);
+    els.gift.addEventListener('click', gift);
+    els.restart.addEventListener('click', reset);
+    document.addEventListener('pointerdown', () => { try { audio()?.resume?.(); } catch (e) {} }, { once: true });
 
-    buildBoard();
+    buildCells();
     initYandex();
-    resetGame();
+    reset();
   })();
   </script>
 </body>
