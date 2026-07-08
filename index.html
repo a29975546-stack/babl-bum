@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#1a0b3d" />
 <meta name="description" content="Бабл Бум — яркая аркада с пузырями, уровнями, миссиями, скинами и ежедневными наградами." />
 <title>Бабл Бум</title>
-<script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=rBAp-M7AKUy_RrAHg5FLD-EBA_HiJOFotHkjOFz8NFEmdKeWD4xDERud4td0BhMpILnc08dYXkNEbK9wxup44Lap5v6S3as5Jb7MAQ88hF80YeasufgG646kkRkqvV77oUVgWega6x_sSvkyUEh55Vjf-9_KEhmOgHiuiReeX-GTLcKTatHwdaLNjTjSHxbnVtTcLubcgM8tLOh0RWGrKig0yijODpu1PiIchwCFVuFuxHRKbKmQw2Q5umq5bYM6j2Gsmmh49MCfaE3BogcGXGZQJepYclKFYklSqU8-lwExpHGaPzIt61WcDafPdIbC_E0A9LOuo8nOuztVKpfJuQ" charset="UTF-8"></script><style>
+<script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=7140Krr1USUbePCn8jXmzr_emry25JbGFBBTtpUM2g5B03hhHQFZ4r8EEwf0sKPJ0d9-3gwowDBK3E-E7iJNyFMRwgMXN8TNOWcgAa8TAZrnfeW8x6yyv051IYt4JSSCPTlq0tg6uoZSwJ8p2zdaUQpiIeDi0fKvnRL3Byvk61QTWESpF6VSXqGOv1jY_JE4Lc_ETLhhbw7YIXBrLK77g74N0PK6212wno7Zpo0Iy8HOuGk0LfIY9avs-ucnFyz0jtg6_PAPHXbd1PsDmHXPXWEYmNIotJPPopBAz6Q9R93pYO2AXqsyxhSys7dT-bQ6" charset="UTF-8"></script><style>
 /* =========================================================
    BUBBLE POP SAGA - Stylesheet
    ========================================================= */
@@ -1662,34 +1662,10 @@ window.__bablVkInit = function () {
   window.__bablVkInitDone = true;
   window.vkBridge.send('VKWebAppInit').catch(function () {});
 };
-
-// OK FAPI: нужен для реальной рекламы в Одноклассниках, если игра запущена как OK-приложение.
-window.__bablOkReady = false;
-window.__bablOkInitDone = false;
-window.__bablOkInit = function () {
-  if (window.__bablOkInitDone) return;
-  if (!window.FAPI || !window.FAPI.Util || !window.FAPI.init) return;
-  try {
-    var rParams = window.FAPI.Util.getRequestParameters ? window.FAPI.Util.getRequestParameters() : {};
-    if (!rParams || !rParams.api_server || !rParams.apiconnection) return;
-    window.__bablOkInitDone = true;
-    window.FAPI.init(
-      rParams.api_server,
-      rParams.apiconnection,
-      function () { window.__bablOkReady = true; },
-      function () { window.__bablOkReady = false; }
-    );
-  } catch (e) {
-    window.__bablOkReady = false;
-  }
-};
 setTimeout(window.__bablVkInit, 0);
 window.addEventListener('load', window.__bablVkInit);
 document.addEventListener('DOMContentLoaded', window.__bablVkInit);
-window.addEventListener('load', window.__bablOkInit);
-document.addEventListener('DOMContentLoaded', window.__bablOkInit);
 </script>
-<script src="https://api.ok.ru/js/fapi5.js" defer onload="window.__bablOkInit && window.__bablOkInit()"></script>
 </head>
 <body>
 <div id="app">
@@ -2021,7 +1997,7 @@ const LANG = {
     gameOver: "Game Over",
     victory: "Level Clear!",
     coinsEarned: "Coins earned",
-    continueAd: "Continue with ad",
+    continueAd: "Continue",
     continue: "Continue",
     sound: "Sound",
     music: "Music",
@@ -2140,7 +2116,7 @@ const LANG = {
     gameOver: "Игра окончена",
     victory: "Уровень пройден!",
     coinsEarned: "Монет получено",
-    continueAd: "Продолжить за рекламу",
+    continueAd: "Продолжить",
     continue: "Продолжить",
     sound: "Звук",
     music: "Музыка",
@@ -2695,9 +2671,6 @@ async function initPlatformSDK() {
     }
 
     loadPlatformData();
-    setTimeout(preloadOkRewardedAd, 1500);
-  } else {
-    setTimeout(preloadOkRewardedAd, 1500);
   }
 }
 
@@ -2747,154 +2720,14 @@ function saveCloudData() {
   } catch(e) {}
 }
 
-/* ============================ ADS: VK / OK REAL MONETIZATION ============================ */
-let lastInterstitialTime = 0;
-let okRewardAdReady = false;
-let okRewardLoading = false;
-let okRewardPendingResolve = null;
-let okRewardReadyAt = 0;
-
-function isOkFapiReady() {
-  return !!(window.FAPI && window.FAPI.UI && window.__bablOkReady);
-}
-
-function showAdNotice(message) {
-  try {
-    showRewardPopup('Реклама', message);
-    setTimeout(() => {
-      if (rewardPopupEl && rewardPopupEl.classList.contains('show')) rewardPopupEl.classList.remove('show');
-    }, 1800);
-  } catch (e) {}
-}
-
-function preloadOkRewardedAd() {
-  if (!isOkFapiReady() || okRewardLoading || okRewardAdReady) return;
-  try {
-    okRewardLoading = true;
-    window.FAPI.UI.loadAd();
-  } catch (e) {
-    okRewardLoading = false;
-  }
-}
-
-function showOkLoadedRewardedAd() {
-  if (!isOkFapiReady() || !okRewardAdReady) {
-    if (okRewardPendingResolve) okRewardPendingResolve(false);
-    okRewardPendingResolve = null;
-    return;
-  }
-  const wait = Math.max(0, 10500 - (Date.now() - okRewardReadyAt));
-  setTimeout(() => {
-    try {
-      window.FAPI.UI.showLoadedAd();
-    } catch (e) {
-      okRewardAdReady = false;
-      if (okRewardPendingResolve) okRewardPendingResolve(false);
-      okRewardPendingResolve = null;
-      preloadOkRewardedAd();
-    }
-  }, wait);
-}
-
-function showOkRewardedAd() {
-  return new Promise(resolve => {
-    if (!isOkFapiReady()) return resolve(false);
-    okRewardPendingResolve = resolve;
-    if (okRewardAdReady) {
-      showOkLoadedRewardedAd();
-      return;
-    }
-    showAdNotice('Готовим рекламу, подожди несколько секунд');
-    preloadOkRewardedAd();
-    setTimeout(() => {
-      if (okRewardPendingResolve === resolve && !okRewardAdReady) {
-        okRewardPendingResolve = null;
-        okRewardLoading = false;
-        resolve(false);
-      }
-    }, 18000);
-  });
-}
-
-function handleOkAdCallback(method, result, data) {
-  if (method === 'loadAd') {
-    okRewardLoading = false;
-    if (result === 'ok' && (data === 'ready' || data === 'ad_prepared')) {
-      okRewardAdReady = true;
-      okRewardReadyAt = Date.now();
-      if (okRewardPendingResolve) showOkLoadedRewardedAd();
-    } else {
-      okRewardAdReady = false;
-      if (okRewardPendingResolve) okRewardPendingResolve(false);
-      okRewardPendingResolve = null;
-    }
-  }
-
-  if (method === 'showLoadedAd') {
-    const success = result === 'ok' && (data === 'complete' || data === 'ad_shown');
-    okRewardAdReady = false;
-    if (okRewardPendingResolve) okRewardPendingResolve(success);
-    okRewardPendingResolve = null;
-    setTimeout(preloadOkRewardedAd, 1200);
-  }
-}
-
-const previousApiCallback = window.API_callback;
-window.API_callback = function (method, result, data) {
-  if (typeof previousApiCallback === 'function') {
-    try { previousApiCallback(method, result, data); } catch (e) {}
-  }
-  handleOkAdCallback(method, result, data);
-};
-
 function showInterstitialAd() {
-  const now = Date.now();
-  // Не спамим рекламу: один interstitial не чаще раза в минуту.
-  if (now - lastInterstitialTime < 60000) return Promise.resolve(false);
-  lastInterstitialTime = now;
-
-  // Одноклассники: interstitial через FAPI.UI.showAd().
-  if (platformName === 'ok' && isOkFapiReady()) {
-    try {
-      window.FAPI.UI.showAd();
-      return Promise.resolve(true);
-    } catch (e) {
-      return Promise.resolve(false);
-    }
-  }
-
-  // VK Mini Apps: interstitial через VK Bridge.
-  if (platformBridge) {
-    return platformBridge.send('VKWebAppShowNativeAds', { ad_format: 'interstitial' })
-      .then(() => true)
-      .catch(() => false);
-  }
-
-  return Promise.resolve(false);
+  // Рекламу VK/OK лучше подключать отдельно после одобрения приложения и настройки монетизации.
+  // Пока функция специально ничего не показывает, чтобы не было фейковой рекламы.
 }
 
 function showRewardedAd(onReward) {
-  const reward = () => { if (typeof onReward === 'function') onReward(); };
-
-  // Одноклассники: rewarded video — сначала loadAd, затем showLoadedAd.
-  if (platformName === 'ok' && isOkFapiReady()) {
-    showOkRewardedAd().then(success => {
-      if (success) reward();
-      else showAdNotice('Реклама недоступна, попробуй позже');
-    });
-    return;
-  }
-
-  // VK Mini Apps: rewarded ads через VK Bridge.
-  if (platformBridge) {
-    platformBridge.send('VKWebAppShowNativeAds', { ad_format: 'reward' })
-      .then(() => reward())
-      .catch(() => showAdNotice('Реклама недоступна, попробуй позже'));
-    return;
-  }
-
-  // В браузере вне VK/ОК реклама недоступна, поэтому оставляем fallback для теста игры.
-  reward();
+  // В VK-версии кнопка называется просто «Продолжить», поэтому награда выдаётся без имитации рекламы.
+  if (typeof onReward === 'function') onReward();
 }
 
 function submitLeaderboardScore(score) {
