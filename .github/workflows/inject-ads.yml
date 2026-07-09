@@ -1,0 +1,239 @@
+name: Inject ads into game
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'ads-trigger.txt'
+      - '.github/workflows/inject-ads.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  inject-ads:
+    if: ${{ !contains(github.event.head_commit.message, '[ads-auto]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clean Kaspersky and add safe ads
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'index.html';
+          if (!fs.existsSync(path)) {
+            console.error('index.html not found');
+            process.exit(1);
+          }
+
+          let html = fs.readFileSync(path, 'utf8');
+          const before = html;
+
+          // Убираем мусор, который случайно вставляет расширение Kaspersky.
+          html = html.replace(/<script\b[^>]*kaspersky-labs\.com[\s\S]*?<\/script>/gi, '');
+          html = html.replace(/<script\b[^>]*gc\.kis\.v2\.scr\.kaspersky-labs\.com[\s\S]*?<\/script>/gi, '');
+
+          const adsBlock = String.raw`
+<!-- BABL_ADS_V1 -->
+<style id="babl-ads-style">
+  #bablAdBanner {
+    position: fixed;
+    left: 50%;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: min(92vw, 520px);
+    height: 58px;
+    z-index: 999999;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(255,218,61,.96), rgba(255,107,157,.96), rgba(77,196,255,.96));
+    box-shadow: 0 12px 34px rgba(0,0,0,.38);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 900 15px system-ui, -apple-system, Segoe UI, sans-serif;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,.35);
+    pointer-events: none;
+  }
+  #bablRewardAdBtn {
+    margin-top: 8px;
+    width: 100%;
+    min-height: 52px;
+    border: 0;
+    border-radius: 18px;
+    font: 900 16px system-ui, -apple-system, Segoe UI, sans-serif;
+    color: #fff;
+    background: linear-gradient(135deg, #ffcf3d, #ff4fa3, #38c7ff);
+    box-shadow: 0 10px 28px rgba(255,79,163,.32);
+    cursor: pointer;
+  }
+</style>
+<script id="babl-ads-script">
+(function () {
+  if (window.__BABL_ADS_V1__) return;
+  window.__BABL_ADS_V1__ = true;
+
+  const ADS_COOLDOWN = 65000;
+  let lastInterstitial = 0;
+  const gameStartedAt = Date.now();
+
+  function createBanner() {
+    if (document.getElementById('bablAdBanner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'bablAdBanner';
+    banner.textContent = 'Рекламный баннер';
+    document.body.appendChild(banner);
+  }
+
+  async function showInterstitialAd(reason) {
+    const now = Date.now();
+    if (now - gameStartedAt < 30000) return false;
+    if (now - lastInterstitial < ADS_COOLDOWN) return false;
+    lastInterstitial = now;
+
+    try {
+      if (window.ysdk && ysdk.adv && ysdk.adv.showFullscreenAdv) {
+        ysdk.adv.showFullscreenAdv({
+          callbacks: {
+            onOpen: function () { console.log('Fullscreen ad open', reason); },
+            onClose: function () { console.log('Fullscreen ad close'); },
+            onError: function (e) { console.log('Fullscreen ad error', e); }
+          }
+        });
+        return true;
+      }
+
+      if (window.vkBridge && vkBridge.send) {
+        try { await vkBridge.send('VKWebAppInit'); } catch (e) {}
+        await vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'interstitial' });
+        return true;
+      }
+    } catch (e) {
+      console.log('Ad unavailable', e);
+    }
+    return false;
+  }
+
+  async function showRewardedAd(onReward) {
+    let rewarded = false;
+    try {
+      if (window.ysdk && ysdk.adv && ysdk.adv.showRewardedVideo) {
+        ysdk.adv.showRewardedVideo({
+          callbacks: {
+            onRewarded: function () { rewarded = true; if (typeof onReward === 'function') onReward(); },
+            onClose: function () {},
+            onError: function (e) { console.log('Reward ad error', e); }
+          }
+        });
+        return true;
+      }
+
+      if (window.vkBridge && vkBridge.send) {
+        try { await vkBridge.send('VKWebAppInit'); } catch (e) {}
+        await vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'reward' });
+        rewarded = true;
+        if (typeof onReward === 'function') onReward();
+        return true;
+      }
+    } catch (e) {
+      console.log('Reward ad unavailable', e);
+    }
+
+    if (!rewarded) alert('Реклама пока недоступна');
+    return false;
+  }
+
+  function giveCoins(amount) {
+    try {
+      const possibleNames = ['coins', 'money', 'playerCoins'];
+      for (const name of possibleNames) {
+        if (typeof window[name] === 'number') {
+          window[name] += amount;
+          break;
+        }
+      }
+      const keys = Object.keys(localStorage);
+      for (const key of keys) {
+        if (/coin|money|bubble/i.test(key)) {
+          const value = Number(localStorage.getItem(key));
+          if (!Number.isNaN(value)) localStorage.setItem(key, String(value + amount));
+        }
+      }
+      if (typeof window.save === 'function') window.save();
+      if (typeof window.saveGame === 'function') window.saveGame();
+      if (typeof window.updateUI === 'function') window.updateUI();
+      if (typeof window.render === 'function') window.render();
+    } catch (e) {}
+  }
+
+  function addRewardButton() {
+    if (document.getElementById('bablRewardAdBtn')) return;
+    const container = document.querySelector('.menu-buttons') || document.querySelector('#mainMenu .menu-inner') || document.querySelector('#mainMenu') || document.body;
+    const btn = document.createElement('button');
+    btn.id = 'bablRewardAdBtn';
+    btn.type = 'button';
+    btn.textContent = '🎁 +100 монет за рекламу';
+    btn.addEventListener('click', function () {
+      showRewardedAd(function () {
+        giveCoins(100);
+        alert('+100 монет!');
+      });
+    });
+    container.appendChild(btn);
+  }
+
+  function hookClicks() {
+    document.addEventListener('click', function (e) {
+      const text = String((e.target && e.target.innerText) || '').toLowerCase();
+      if (
+        text.includes('далее') || text.includes('next') ||
+        text.includes('заново') || text.includes('restart') ||
+        text.includes('ещё') || text.includes('again') ||
+        text.includes('в меню') || text.includes('menu') ||
+        text.includes('уровень') || text.includes('level')
+      ) {
+        setTimeout(function () { showInterstitialAd('button-action'); }, 500);
+      }
+    }, true);
+  }
+
+  window.BablAds = { showInterstitialAd, showRewardedAd };
+
+  window.addEventListener('load', function () {
+    createBanner();
+    addRewardButton();
+    hookClicks();
+    setInterval(function () { showInterstitialAd('timer'); }, 120000);
+  });
+})();
+</script>
+<!-- /BABL_ADS_V1 -->`;
+
+          if (!html.includes('BABL_ADS_V1')) {
+            if (html.includes('</body>')) {
+              html = html.replace('</body>', adsBlock + '\n</body>');
+            } else {
+              html += '\n' + adsBlock + '\n';
+            }
+          }
+
+          if (html !== before) {
+            fs.writeFileSync(path, html, 'utf8');
+          }
+          NODE
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No ad changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add safe ads and clean injected script [ads-auto]"
+          git push
